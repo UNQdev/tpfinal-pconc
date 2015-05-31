@@ -1,0 +1,22 @@
+package main;
+
+import java.util.concurrent.SynchronousQueue;
+
+public class IntegerList {
+	
+	public synchronized int size() {}
+	public synchronized boolean isEmpty() {}
+	public synchronized boolean contains(Integer element) {}
+	public synchronized ArrayList<Integer> add(Integer element) {}
+	public synchronized Integer get(int element_index) {}
+	public synchronized set() {}
+
+	public ArrayList<Integer>() sort(ArrayList<Integer>() list, int threadsDisponibles) {
+		ArrayList<Integer>() result = new ArrayList<Integer>();
+		return result;
+	}
+	
+	public ArrayList<Integer>() greaterThan(Integer pivot) {
+		for ()
+	}
+}
