@@ -18,7 +18,7 @@ public class IntegerList {
 		return list.contains(element);
 	}
 	public synchronized void add(Integer element) {
-		
+		list.add(element);
 	}
 	public synchronized Integer get(int index) {
 		return list.get(index);
