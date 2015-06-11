@@ -16,7 +16,7 @@ public class IntegerList {
 	/*
 	 * SETUP
 	 */
-	public IntegerList(int availableThreads, ArrayList<Integer> list) {
+	public IntegerList(ArrayList<Integer> list, int availableThreads) {
 		this.availableThreads = availableThreads;
 		this.list = list;
 	}
@@ -34,95 +34,42 @@ public class IntegerList {
 	public synchronized void add(Integer element) { list.add(element); }
 	public synchronized Integer get(int index) { return list.get(index); }
 	public synchronized void set(Integer element, int index) { list.set(index, element); }
-	public synchronized ArrayList<Integer> sort() {
-		ArrayList<Integer> sortedElements = new ArrayList<Integer>();
-
-		if (!this.isEmpty()) {
-			this.waitAvailableThreads();
-			
-//			IntegerList leftIntegerListElements = new IntegerList(lessThan(getPivot()));
-//			IntegerList rightIntegerListElements = new IntegerList(greaterThan(getPivot()));
-
-			System.out.println("SORT IZQ");
-			Sorter minorElements = this.sendToSorter(lessThan(getPivot()), this);
-			while (availableThreads <= 1) { this.waitLinealSort(); }
-			System.out.println("SORT DER");
-			Sorter greaterElements = this.sendToSorter(greaterThan(getPivot()), this);
-			while (!minorElements.isSorted() && !greaterElements.isSorted()) { this.waitSorted(); }
-			
-			sortedElements.addAll(minorElements.getSortedElements());
-			sortedElements.add(this.getPivot());
-			sortedElements.addAll(greaterElements.getSortedElements());
-		
+	public synchronized void sort() {
+		Buffer buffer = new Buffer();
+		Counter counter = new Counter(size()-1);
+		for(int i = 0; i < availableThreads; i++) {
+			new Sorter(this, buffer, counter).start();
 		}
-		
-		return sortedElements; 
-	}
-	private Sorter sendToSorter(ArrayList<Integer> integerListElements,
-			IntegerList integerList) {
-		IntegerList asortedIntergerList = new IntegerList(this.getAvailableThreads(), integerListElements);
-		Sorter sorter = new Sorter(asortedIntergerList, this);
-		
-		sorter.start();
-		
-		return sorter;
-	}
-	/*
-	 * LIST STRIP
-	 */
-	public synchronized Integer getPivot() { return get(size() / 2); }
-	public synchronized ArrayList<Integer> lessThan(Integer pivot) {
-		ArrayList<Integer> lessThanPivot = new ArrayList<Integer>();
-		for (Integer element : this.list) {
-			if (element < pivot) {
-				lessThanPivot.add(element);
-			}
+		Range init_range = new Range(0, size()-1);
+		buffer.push(init_range);
+		counter.waitZero();
+		Range invalid_range = new Range(-1,0);
+		for (int i = 0; i < availableThreads ; i++) {
+			buffer.push(invalid_range);
 		}
+	}
+	
+	public int partition(int begin, int end) {
+    	int lessThanPivot = 0;
+        Integer pivot = this.get(begin); 
+    	for (int i = begin+1; i <= end; i++) {    		
+    		if (this.get(i) < pivot ) {
+    	        swap(i, begin+1 + lessThanPivot);
+    	        lessThanPivot++;
+    		}
+    	}
+    	System.out.println(lessThanPivot);
 		return lessThanPivot;
+    }
+    
+	private void swap(int firstIndex, int secondIndex) {    	
+		Integer elementoEnA = this.get(firstIndex);
+		Integer elementoEnB = this.get(secondIndex);
+		this.set(secondIndex, elementoEnA);
+		this.set(firstIndex, elementoEnB);
 	}
-	public synchronized ArrayList<Integer> greaterThan(Integer pivot) {
-		ArrayList<Integer> greaterThanPivot = new ArrayList<Integer>();
-		for (Integer element : this.list) {
-			if (element > pivot) {
-				greaterThanPivot.add(element);
-			}
-		}
-		return greaterThanPivot;
-	}
-	/*
-	 * THREAD CONTROL
-	 */
-	public void waitAvailableThreads() {
-		try {
-			if (this.getAvailableThreads() == 0) {
-				System.out.println("BEGIN WAITING FOR AVAILABLE THREADS");
-				this.wait();
-				System.out.println("FINISHED WAITING THREADS");
-			}
-		} catch (InterruptedException e) {
-			System.out.println("WAITING_AVAILABLE_THREADS ERROR: "
-					+ e.getMessage());
-		}		
-	}
-	public void waitLinealSort() {
-		try {
-			System.out.println("BEGIN WAITING FOR LINEAL SORT");
-			this.wait();
-			System.out.println("FINISHED WAITING FOR LINEAL SORT");
-		} catch (InterruptedException e) {
-			System.out.println("WAITING_LINEAL_SORT ERROR: " + e.getMessage());
-		}		
-	}
-	public void waitSorted() {
-		try {
-			System.out.println("BEGIN WAITING FOR BOTH TO BE SORTED");
-			this.wait();
-			System.out.println("FINISHED WAITING FOR BOTH TO BE SORTED");
-		} catch (InterruptedException e) {
-			System.out.println("WAITING_SORTED ERROR: " + e.getMessage());
-		}
-	}
-	public synchronized void decAvailableThreads() { this.availableThreads--; }
-	public synchronized void incAvailableThreads() { this.availableThreads++; }
-	public synchronized void wakeUpWaiter() { notify(); }
+	
+	@Override
+	public String toString() { return this.list.toString(); }
+	
 }
